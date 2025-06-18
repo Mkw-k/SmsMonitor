@@ -25,7 +25,8 @@ public class SmsReceiveApplicationService {
         order.setCustomerName(smsContent);
         order.setStatus(OrderStatus.PAID);
 //        order.setTotalAmount(maybePayment.get().getAmount());
-        order.setTotalAmount(10000);
+//        order.setTotalAmount(10000);
+        order.setSender(phoneNumber);
 
         Order domain = OrderMapper.toDomain(order);
         OrderEntity save = orderRepository.save(domain);

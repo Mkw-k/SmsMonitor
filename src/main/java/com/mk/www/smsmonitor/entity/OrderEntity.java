@@ -20,4 +20,6 @@ public class OrderEntity {
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
+    private String sender;
 }
