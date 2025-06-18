@@ -31,6 +31,9 @@ public class SmsReceiveApplicationService {
         Order domain = OrderMapper.toDomain(order);
         OrderEntity save = orderRepository.save(domain);
 
+        // TODO 여기서 구글시트 업데이트 연동
+        /////////////////////////////
+
         return save;
         /*Payment payment = maybePayment.get();
         List<Order> pendingOrders = orderRepository.findPendingOrders();
