@@ -2,7 +2,7 @@ package com.mk.www.smsmonitor.infrastructure;
 
 import com.mk.www.smsmonitor.domain.Order;
 import com.mk.www.smsmonitor.domain.OrderStatus;
-import com.mk.www.smsmonitor.entity.OrderEntity;
+import com.mk.www.smsmonitor.entity.OrderJpaEntity;
 import com.mk.www.smsmonitor.repository.OrderRepository;
 
 import java.util.List;
@@ -25,8 +25,8 @@ public class GoogleSheetOrderRepository implements OrderRepository {
     }
 
     @Override
-    public OrderEntity save(Order order) {
-        client.updateOrderStatus(order.getId(), order.getStatus());
+    public OrderJpaEntity save(Order order) {
+        client.updateOrderStatus(order.getIdx(), order.getStatus());
         return null;
     }
 }

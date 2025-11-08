@@ -9,7 +9,7 @@ import lombok.Setter;
 @Table(name = "orders")
 @Getter
 @Setter
-public class OrderEntity {
+public class OrderJpaEntity {
     @Id
     @GeneratedValue
     private Long id;

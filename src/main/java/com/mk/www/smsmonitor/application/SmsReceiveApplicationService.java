@@ -1,14 +1,12 @@
 package com.mk.www.smsmonitor.application;
 
 import com.mk.www.smsmonitor.domain.*;
-import com.mk.www.smsmonitor.entity.OrderEntity;
+import com.mk.www.smsmonitor.entity.OrderJpaEntity;
 import com.mk.www.smsmonitor.infrastructure.OrderMapper;
 import com.mk.www.smsmonitor.repository.OrderRepository;
 import com.mk.www.smsmonitor.infrastructure.SmsParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,11 +15,11 @@ public class SmsReceiveApplicationService {
     private final SmsParser smsParser;
     private final OrderRepository orderRepository;
 
-    public OrderEntity handleSms(String smsContent, String phoneNumber) {
+    public OrderJpaEntity handleSms(String smsContent, String phoneNumber) {
 //        Optional<Payment> maybePayment = smsParser.parse(smsContent);
 //        if (!maybePayment.isPresent()) return null;
 
-        OrderEntity order = new OrderEntity();
+        OrderJpaEntity order = new OrderJpaEntity();
         order.setCustomerName(smsContent);
         order.setStatus(OrderStatus.PAID);
 //        order.setTotalAmount(maybePayment.get().getAmount());
@@ -29,7 +27,7 @@ public class SmsReceiveApplicationService {
         order.setSender(phoneNumber);
 
         Order domain = OrderMapper.toDomain(order);
-        OrderEntity save = orderRepository.save(domain);
+        OrderJpaEntity save = orderRepository.save(domain);
 
         // TODO 여기서 구글시트 업데이트 연동
         /////////////////////////////
