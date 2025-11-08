@@ -11,11 +11,10 @@ import lombok.Setter;
 @Table(name = "payments")
 @Getter
 @Setter
-public class PaymentEntity {
+public class PaymentJpaEntity {
     @Id
     @GeneratedValue
     private Long id;
     private String senderName;
     private int amount;
-
 }
