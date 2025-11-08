@@ -14,11 +14,7 @@ public class OrderMapper {
     }
 
     public static OrderJpaEntity toEntity(Order domain) {
-        OrderJpaEntity entity = new OrderJpaEntity();
-//        entity.setId(Long.parseLong(domain.getId()));
-        entity.setCustomerName(domain.getCustomerName());
-        entity.setTotalAmount(domain.getPrice());
-        entity.setStatus(domain.getStatus());
-        return entity;
+        //entity.setId(Long.parseLong(domain.getId()));
+        return new OrderJpaEntity(domain.getCustomerName(), domain.getPrice(), domain.getStatus());
     }
 }

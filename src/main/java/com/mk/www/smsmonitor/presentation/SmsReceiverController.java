@@ -17,13 +17,13 @@ public class SmsReceiverController {
     private final SmsReceiveApplicationService smsProcessingService;
 
     @PostMapping
-    public ResponseEntity<?> receiveSms(@RequestBody SmsRequestDTO smsRequestDTO) {
-        OrderJpaEntity order = smsProcessingService.handleSms(smsRequestDTO.getMessage(), smsRequestDTO.getSender());
-        return ResponseEntity.ok().body(order);
+    public ResponseEntity<String> receiveSms(@RequestBody SmsRequestDTO smsRequestDTO) {
+        smsProcessingService.handleSms(smsRequestDTO.getMessage(), smsRequestDTO.getSender());
+        return ResponseEntity.ok().body("SMS received and processing started.");
     }
 
     @GetMapping
-    public ResponseEntity<?> getSms(@RequestParam(value = "msg", required = false) String msg) {
+    public ResponseEntity<String> getSms(@RequestParam(value = "msg", required = false) String msg) {
       log.info("에크 {}", msg);
       return ResponseEntity.ok().body("에크 " + msg);
     }

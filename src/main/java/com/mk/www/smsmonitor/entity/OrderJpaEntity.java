@@ -8,7 +8,6 @@ import lombok.Setter;
 @Entity
 @Table(name = "orders")
 @Getter
-@Setter
 public class OrderJpaEntity {
     @Id
     @GeneratedValue
@@ -22,4 +21,19 @@ public class OrderJpaEntity {
     private OrderStatus status;
 
     private String sender;
+
+    public OrderJpaEntity(String customerName, OrderStatus status, String sender) {
+        this.customerName = customerName;
+        this.status = status;
+        this.sender = sender;
+    }
+
+    public OrderJpaEntity(String customerName, int totalAmount, OrderStatus status) {
+        this.customerName = customerName;
+        this.totalAmount = totalAmount;
+        this.status = status;
+    }
+
+    public OrderJpaEntity() {
+    }
 }
