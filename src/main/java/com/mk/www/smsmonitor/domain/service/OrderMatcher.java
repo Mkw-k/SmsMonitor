@@ -1,5 +1,7 @@
-package com.mk.www.smsmonitor.domain;
+package com.mk.www.smsmonitor.domain.service;
 
+import com.mk.www.smsmonitor.domain.model.Order;
+import com.mk.www.smsmonitor.domain.model.Payment;
 
 import java.util.List;
 import java.util.Optional;
