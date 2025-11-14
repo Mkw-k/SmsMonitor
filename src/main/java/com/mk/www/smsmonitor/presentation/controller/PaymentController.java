@@ -1,7 +1,7 @@
-package com.mk.www.smsmonitor.presentation;
+package com.mk.www.smsmonitor.presentation.controller;
 
-import com.mk.www.smsmonitor.application.GoogleSheetService;
-import com.mk.www.smsmonitor.domain.PaymentRequest;
+import com.mk.www.smsmonitor.application.service.GoogleSheetService;
+import com.mk.www.smsmonitor.presentation.dto.PaymentRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/payment")
 public class PaymentController {
 
-    private final com.mk.www.smsmonitor.application.GoogleSheetService sheetService;
+    private final GoogleSheetService sheetService;
 
     public PaymentController(GoogleSheetService sheetService) {
         this.sheetService = sheetService;

@@ -1,6 +1,6 @@
-package com.mk.www.smsmonitor.infrastructure;
+package com.mk.www.smsmonitor.infrastructure.sms;
 
-import com.mk.www.smsmonitor.domain.Payment;
+import com.mk.www.smsmonitor.domain.model.Payment;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

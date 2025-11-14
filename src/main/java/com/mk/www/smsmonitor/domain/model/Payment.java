@@ -1,4 +1,4 @@
-package com.mk.www.smsmonitor.domain;
+package com.mk.www.smsmonitor.domain.model;
 
 public class Payment {
     private final String senderName;

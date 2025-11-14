@@ -1,4 +1,4 @@
-package com.mk.www.smsmonitor.domain;
+package com.mk.www.smsmonitor.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

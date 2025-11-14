@@ -1,7 +1,7 @@
-package com.mk.www.smsmonitor.infrastructure;
+package com.mk.www.smsmonitor.infrastructure.googlesheet;
 
-import com.mk.www.smsmonitor.domain.Order;
-import com.mk.www.smsmonitor.domain.OrderStatus;
+import com.mk.www.smsmonitor.domain.model.Order;
+import com.mk.www.smsmonitor.domain.model.OrderStatus;
 
 import java.util.List;
 

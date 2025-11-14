@@ -1,5 +1,6 @@
-package com.mk.www.smsmonitor.repository;
+package com.mk.www.smsmonitor.infrastructure.persistence.repository;
 
+import com.mk.www.smsmonitor.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

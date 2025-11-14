@@ -1,4 +1,4 @@
-package com.mk.www.smsmonitor.domain;
+package com.mk.www.smsmonitor.presentation.dto;
 
 public class PaymentRequest {
     private String 번호;
