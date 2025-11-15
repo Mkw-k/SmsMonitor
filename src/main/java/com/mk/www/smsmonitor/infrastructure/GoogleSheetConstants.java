@@ -3,6 +3,7 @@ package com.mk.www.smsmonitor.infrastructure;
 
 //TODO 나중에 디비에서 불러오는거로 변경
 //구글시트 관련 상수
+@Deprecated
 public final class GoogleSheetConstants {
     private GoogleSheetConstants() {}
 
