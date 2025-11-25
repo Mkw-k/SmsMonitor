@@ -40,6 +40,9 @@ public class TransactionMapper {
         entity.setStupidCost(domain.isStupidCost());
         entity.setOriginalSmsContent(domain.getOriginalSmsContent());
         entity.setMemo(domain.getMemo());
+        entity.setName(domain.getName());
+        entity.setCardNumber(domain.getCardNumber());
+
         return entity;
     }
 }
