@@ -5,6 +5,7 @@ import com.mk.www.smsmonitor.domain.model.Transaction;
 import com.mk.www.smsmonitor.domain.service.StupidCostStrategy;
 import com.mk.www.smsmonitor.presentation.dto.SmsRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class SmsService {
 
     private final TransactionService transactionService;
@@ -22,6 +24,8 @@ public class SmsService {
 
     public boolean processNewSms(SmsRequest request) {
         Optional<Transaction> transactionOptional = parseSms(request.getMessage());
+
+        log.info("sms 전문 >>> {}", request.getMessage());
 
         if (transactionOptional.isEmpty()) {
             return false;

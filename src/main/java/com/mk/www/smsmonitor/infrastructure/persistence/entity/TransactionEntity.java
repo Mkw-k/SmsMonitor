@@ -39,4 +39,8 @@ public class TransactionEntity {
     private String originalSmsContent;
 
     private String memo;
+
+    private String cardNumber;
+
+    private String name;
 }

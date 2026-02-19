@@ -59,4 +59,25 @@ class NhCardParserTest {
         // then
         assertThat(result).isNotPresent();
     }
+
+    @Test
+    @DisplayName("[GS]NH농협카드_승인_SMS_예시를_Transaction_객체로_정확히_변환한다")
+    void NH농협카드_승인_SMS_예시를_Transaction_객체로_정확히_변환한다_GS() {
+        // given
+        String sms = "NH카드2*0* 승인\n" +
+                "고*우\n" +
+                "10,600원 체크\n" +
+                "11/14 12:49\n" +
+                "지에스(GS)25 궁동중앙점";
+
+        // when
+        Optional<Transaction> result = parser.parse(sms);
+
+        // then
+        assertThat(result).isPresent();
+        Transaction transaction = result.get();
+        assertThat(transaction.getAmount()).isEqualTo(new BigDecimal("10600"));
+        assertThat(transaction.getVendor()).isEqualTo("지에스(GS)25 궁동중앙점");
+        assertThat(transaction.getTransactionTime()).isEqualTo(LocalDateTime.of(LocalDateTime.now().getYear(), Month.NOVEMBER, 14, 12, 49));
+    }
 }

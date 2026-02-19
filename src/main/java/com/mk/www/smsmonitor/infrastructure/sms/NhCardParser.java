@@ -16,8 +16,13 @@ import java.util.regex.Pattern;
 @Slf4j
 public class NhCardParser implements SmsParser {
 
+    // 모든 필드를 다 캡처하도록 수정된 정규식
     private static final Pattern NH_CARD_PATTERN = Pattern.compile(
-            "NH카드.*?승인.*?\\n(?<amount>[\\d,]+)원.*?\\n(?<date>\\d{2}/\\d{2} \\d{2}:\\d{2})\\n(?<vendor>.*)",
+            "NH카드(?<cardNum>.*?)승인\\n" +        // 1번째 줄: 카드번호 (2*0*) 추출
+                    "(?<name>.*?)\\n" +               // 2번째 줄: 사용자명 (고*우) 추출
+                    "(?<amount>[\\d,]+)원.*?\\n" +          // 3번째 줄: 금액 추출 (뒤에 '체크' 같은건 무시하거나 필요하면 (?<type>.*?) 추가)
+                    "(?<date>\\d{2}/\\d{2} \\d{2}:\\d{2})\\n" + // 4번째 줄: 날짜
+                    "(?<vendor>.*)",                      // 5번째 줄: 사용처
             Pattern.DOTALL
     );
 
@@ -28,12 +33,18 @@ public class NhCardParser implements SmsParser {
         }
 
         Matcher matcher = NH_CARD_PATTERN.matcher(smsContent);
+
         if (matcher.find()) {
             try {
+                // 1. 데이터 추출 (그룹 이름으로 가져오기)
+                String cardNum = matcher.group("cardNum").trim();
+                String name = matcher.group("name").trim();
                 String amountStr = matcher.group("amount").replace(",", "");
-                BigDecimal amount = new BigDecimal(amountStr);
-                String vendor = matcher.group("vendor").trim();
                 String dateTimeStr = matcher.group("date");
+                String vendor = matcher.group("vendor").trim();
+
+                // 2. 데이터 변환
+                BigDecimal amount = new BigDecimal(amountStr);
 
                 DateTimeFormatter formatter = new java.time.format.DateTimeFormatterBuilder()
                         .appendPattern("MM/dd HH:mm")
@@ -41,15 +52,19 @@ public class NhCardParser implements SmsParser {
                         .toFormatter();
                 LocalDateTime transactionTime = LocalDateTime.parse(dateTimeStr, formatter);
 
+                // 3. 객체 생성
                 return Optional.of(Transaction.builder()
+                        .cardNumber(cardNum)    // Transaction 모델에 이 필드 추가 필요
+                        .name(name)     // Transaction 모델에 이 필드 추가 필요
                         .amount(amount)
                         .vendor(vendor)
                         .transactionTime(transactionTime)
                         .originalSmsContent(smsContent)
                         .isStupidCost(false)
                         .build());
+
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                log.error("NH카드 SMS 파싱 에러: {}", e.getMessage(), e);
                 return Optional.empty();
             }
         }
@@ -58,6 +73,6 @@ public class NhCardParser implements SmsParser {
 
     @Override
     public boolean supports(String smsContent) {
-        return smsContent != null && smsContent.contains("NH카드") && smsContent.contains(" 승인") && !smsContent.contains("승인거절");
+        return smsContent != null && smsContent.contains("NH카드") && smsContent.contains("승인") && !smsContent.contains("승인거절");
     }
 }
