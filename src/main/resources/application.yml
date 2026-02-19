@@ -11,6 +11,14 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /docs/openapi3.json
+  api-docs:
+    enabled: false # REST Docs로 생성된 spec을 사용할 것이므로 런타임 생성 기능은 끕니다.
+
 logging:
   level:
     org.hibernate.SQL: debug

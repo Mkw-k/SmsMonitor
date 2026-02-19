@@ -7,27 +7,38 @@ import com.mk.www.smsmonitor.application.service.TransactionService;
 import com.mk.www.smsmonitor.domain.model.Transaction;
 import com.mk.www.smsmonitor.presentation.dto.MemoRequest;
 import com.mk.www.smsmonitor.presentation.dto.SmsRequest;
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
+@AutoConfigureRestDocs
+@ActiveProfiles("test")
 class TransactionControllerTest {
 
     @Autowired
@@ -56,14 +67,33 @@ class TransactionControllerTest {
         mockMvc.perform(post("/api/transactions/sms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andDo(document("transaction-sms",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("SMS 수신 및 거래내역 저장")
+                                .description("수신된 SMS 메시지를 파싱하여 거래내역으로 저장합니다.")
+                                .requestFields(
+                                        fieldWithPath("sender").description("SMS 발신 번호"),
+                                        fieldWithPath("message").description("SMS 메시지 내용")
+                                )
+                                .build()
+                        )
+                ));
     }
 
     @Test
     @DisplayName("GET_api_transactions_거래내역_페이지_조회_요청을_성공한다")
     void GET_api_transactions_거래내역_페이지_조회_요청을_성공한다() throws Exception {
         // given
-        Page<Transaction> page = new PageImpl<>(List.of(Transaction.builder().vendor("store1").build()));
+        Transaction transaction = Transaction.builder()
+                .id(1L)
+                .amount(new BigDecimal("10000"))
+                .vendor("store1")
+                .transactionTime(LocalDateTime.now())
+                .isStupidCost(false)
+                .memo("memo")
+                .build();
+        Page<Transaction> page = new PageImpl<>(List.of(transaction));
         when(transactionService.getAllTransactions(any(Pageable.class))).thenReturn(page);
 
         // when & then
@@ -71,14 +101,54 @@ class TransactionControllerTest {
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].vendor").value("store1"));
+                .andExpect(jsonPath("$.content[0].vendor").value("store1"))
+                .andDo(document("transaction-list",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("거래내역 목록 조회")
+                                .description("모든 거래내역을 페이지 단위로 조회합니다.")
+                                .queryParameters(
+                                        parameterWithName("page").description("페이지 번호 (0부터 시작)").optional(),
+                                        parameterWithName("size").description("페이지 크기").optional(),
+                                        parameterWithName("isStupid").description("멍청비용 필터 여부").optional()
+                                )
+                                .responseFields(
+                                        fieldWithPath("content[].id").description("거래 ID"),
+                                        fieldWithPath("content[].amount").description("금액"),
+                                        fieldWithPath("content[].vendor").description("가맹점"),
+                                        fieldWithPath("content[].transactionTime").description("거래 일시"),
+                                        fieldWithPath("content[].stupidCost").description("멍청비용 여부"),
+                                        fieldWithPath("content[].memo").description("메모").optional(),
+                                        fieldWithPath("content[].categoryName").description("카테고리명").optional(),
+                                        fieldWithPath("pageable").description("페이지 정보"),
+                                        fieldWithPath("last").description("마지막 페이지 여부"),
+                                        fieldWithPath("totalPages").description("전체 페이지 수"),
+                                        fieldWithPath("totalElements").description("전체 요소 수"),
+                                        fieldWithPath("size").description("페이지 크기"),
+                                        fieldWithPath("number").description("현재 페이지 번호"),
+                                        fieldWithPath("sort.empty").description("정렬 정보 비어있음 여부"),
+                                        fieldWithPath("sort.sorted").description("정렬됨 여부"),
+                                        fieldWithPath("sort.unsorted").description("정렬되지 않음 여부"),
+                                        fieldWithPath("first").description("첫 페이지 여부"),
+                                        fieldWithPath("numberOfElements").description("현재 페이지 요소 수"),
+                                        fieldWithPath("empty").description("비어 있음 여부")
+                                )
+                                .build()
+                        )
+                ));
     }
 
     @Test
     @DisplayName("GET_api_transactions_isStupid_true_멍청비용_페이지_조회_요청을_성공한다")
     void GET_api_transactions_isStupid_true_멍청비용_페이지_조회_요청을_성공한다() throws Exception {
         // given
-        Page<Transaction> page = new PageImpl<>(List.of(Transaction.builder().vendor("stupid_store").isStupidCost(true).build()));
+        Transaction transaction = Transaction.builder()
+                .id(2L)
+                .amount(new BigDecimal("50000"))
+                .vendor("stupid_store")
+                .transactionTime(LocalDateTime.now())
+                .isStupidCost(true)
+                .build();
+        Page<Transaction> page = new PageImpl<>(List.of(transaction));
         when(transactionService.getStupidCostTransactions(any(Pageable.class))).thenReturn(page);
 
         // when & then
@@ -88,7 +158,40 @@ class TransactionControllerTest {
                         .param("size", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].vendor").value("stupid_store"))
-                .andExpect(jsonPath("$.content[0].stupidCost").value(true));
+                .andExpect(jsonPath("$.content[0].stupidCost").value(true))
+                .andDo(document("transaction-stupid-list",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("멍청비용 내역 목록 조회")
+                                .description("멍청비용으로 분류된 거래내역을 페이지 단위로 조회합니다.")
+                                .queryParameters(
+                                        parameterWithName("isStupid").description("멍청비용 필터 여부 (true 고정)"),
+                                        parameterWithName("page").description("페이지 번호").optional(),
+                                        parameterWithName("size").description("페이지 크기").optional()
+                                )
+                                .responseFields(
+                                        fieldWithPath("content[].id").description("거래 ID"),
+                                        fieldWithPath("content[].amount").description("금액"),
+                                        fieldWithPath("content[].vendor").description("가맹점"),
+                                        fieldWithPath("content[].transactionTime").description("거래 일시"),
+                                        fieldWithPath("content[].stupidCost").description("멍청비용 여부"),
+                                        fieldWithPath("content[].memo").description("메모").optional(),
+                                        fieldWithPath("content[].categoryName").description("카테고리명").optional(),
+                                        fieldWithPath("pageable").description("페이지 정보"),
+                                        fieldWithPath("last").description("마지막 페이지 여부"),
+                                        fieldWithPath("totalPages").description("전체 페이지 수"),
+                                        fieldWithPath("totalElements").description("전체 요소 수"),
+                                        fieldWithPath("size").description("페이지 크기"),
+                                        fieldWithPath("number").description("현재 페이지 번호"),
+                                        fieldWithPath("sort.empty").description("정렬 정보 비어있음 여부"),
+                                        fieldWithPath("sort.sorted").description("정렬됨 여부"),
+                                        fieldWithPath("sort.unsorted").description("정렬되지 않음 여부"),
+                                        fieldWithPath("first").description("첫 페이지 여부"),
+                                        fieldWithPath("numberOfElements").description("현재 페이지 요소 수"),
+                                        fieldWithPath("empty").description("비어 있음 여부")
+                                )
+                                .build()
+                        )
+                ));
     }
 
     @Test
@@ -97,15 +200,44 @@ class TransactionControllerTest {
         // given
         MemoRequest request = new MemoRequest();
         request.setMemo("새로운 메모");
-        Transaction updatedTransaction = Transaction.builder().id(1L).memo("새로운 메모").build();
+        Transaction updatedTransaction = Transaction.builder()
+                .id(1L)
+                .amount(new BigDecimal("10000"))
+                .vendor("store1")
+                .transactionTime(LocalDateTime.now())
+                .isStupidCost(false)
+                .memo("새로운 메모")
+                .build();
 
         when(transactionService.updateMemo(any(Long.class), any(MemoRequest.class))).thenReturn(Optional.of(updatedTransaction));
 
         // when & then
-        mockMvc.perform(put("/api/transactions/1/memo")
+        mockMvc.perform(put("/api/transactions/{id}/memo", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.memo").value("새로운 메모"));
+                .andExpect(jsonPath("$.memo").value("새로운 메모"))
+                .andDo(document("transaction-memo-update",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("거래내역 메모 수정")
+                                .description("특정 거래내역의 메모를 수정합니다.")
+                                .pathParameters(
+                                        parameterWithName("id").description("거래 ID")
+                                )
+                                .requestFields(
+                                        fieldWithPath("memo").description("수정할 메모 내용")
+                                )
+                                .responseFields(
+                                        fieldWithPath("id").description("거래 ID"),
+                                        fieldWithPath("amount").description("금액"),
+                                        fieldWithPath("vendor").description("가맹점"),
+                                        fieldWithPath("transactionTime").description("거래 일시"),
+                                        fieldWithPath("stupidCost").description("멍청비용 여부"),
+                                        fieldWithPath("memo").description("수정된 메모 내용"),
+                                        fieldWithPath("categoryName").description("카테고리명").optional()
+                                )
+                                .build()
+                        )
+                ));
     }
 }

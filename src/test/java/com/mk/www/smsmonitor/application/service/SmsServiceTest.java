@@ -90,6 +90,11 @@ class SmsServiceTest {
         SmsRequest request = new SmsRequest();
         request.setSender("+821012345678");
         request.setMessage(smsContent);
+        Transaction mockTransaction = mock(Transaction.class);
+
+        when(kbCardParser.supports(smsContent)).thenReturn(false);
+        when(nhCardParser.supports(smsContent)).thenReturn(true);
+        when(nhCardParser.parse(smsContent)).thenReturn(Optional.of(mockTransaction));
 
         // when
         boolean result = smsService.processNewSms(request);
@@ -97,6 +102,7 @@ class SmsServiceTest {
         // then
         assertThat(result).isTrue();
         verify(kbCardParser, times(1)).supports(smsContent);
-        verify(kbCardParser, times(1)).parse(smsContent);
+        verify(nhCardParser, times(1)).supports(smsContent);
+        verify(nhCardParser, times(1)).parse(smsContent);
     }
 }
