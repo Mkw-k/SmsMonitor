@@ -11,6 +11,12 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+
+google:
+  credentials:
+    path: "dummy-path"
+    json-content: "{}"
+
 logging:
   level:
     org.hibernate.SQL: debug

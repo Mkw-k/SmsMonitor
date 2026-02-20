@@ -1,6 +1,6 @@
 package com.mk.www.smsmonitor.presentation.controller;
 
-import com.mk.www.smsmonitor.presentation.dto.ResultDTO;
+import com.mk.www.smsmonitor.common.api.ResultDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
