@@ -37,7 +37,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // 가입, 로그인, Swagger는 허용
+                        // 일단 임시 전체 허용
                         .requestMatchers(new AntPathRequestMatcher("/api/auth/register")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/auth/login")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/auth/refresh")).permitAll()
@@ -47,9 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/docs/**")).permitAll()
                         .anyRequest().authenticated()
                 )
-                // 1. 인증 필터 (로그인 처리)
                 .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                // 2. 인가 필터 (모든 요청 권한 검증)
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
