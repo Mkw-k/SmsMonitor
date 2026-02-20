@@ -2,16 +2,23 @@ package com.mk.www.smsmonitor.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mk.www.smsmonitor.application.service.SpendingCategoryService;
+import com.mk.www.smsmonitor.config.JwtAuthorizationFilter;
+import com.mk.www.smsmonitor.config.JwtTokenProvider;
+import com.mk.www.smsmonitor.config.SecurityConfig;
 import com.mk.www.smsmonitor.domain.model.SpendingCategory;
 import com.mk.www.smsmonitor.presentation.dto.SpendingCategoryRequest;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,11 +31,14 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SpendingCategoryController.class)
 @AutoConfigureRestDocs
+@Import({SecurityConfig.class, JwtAuthorizationFilter.class})
 @ActiveProfiles("test")
 @WithMockUser
 class SpendingCategoryControllerTest {
@@ -41,6 +51,20 @@ class SpendingCategoryControllerTest {
 
     @MockBean
     private SpendingCategoryService spendingCategoryService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private AuthenticationConfiguration authenticationConfiguration;
+
+    @MockBean
+    private AuthenticationManager authenticationManager;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
+    }
 
     @Test
     @DisplayName("POST /api/spending-categories - 카테고리 생성 요청을 성공한다")
@@ -60,6 +84,7 @@ class SpendingCategoryControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/spending-categories")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -94,7 +119,8 @@ class SpendingCategoryControllerTest {
         when(spendingCategoryService.getAllSpendingCategories()).thenReturn(categories);
 
         // when & then
-        mockMvc.perform(get("/api/spending-categories"))
+        mockMvc.perform(get("/api/spending-categories")
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name").value("식비"))
                 .andDo(document("spending-category-list",
@@ -121,7 +147,8 @@ class SpendingCategoryControllerTest {
         when(spendingCategoryService.deleteSpendingCategory(1L)).thenReturn(true);
 
         // when & then
-        mockMvc.perform(delete("/api/spending-categories/{id}", 1L))
+        mockMvc.perform(delete("/api/spending-categories/{id}", 1L)
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andDo(document("spending-category-delete",
                         resource(ResourceSnippetParameters.builder()
