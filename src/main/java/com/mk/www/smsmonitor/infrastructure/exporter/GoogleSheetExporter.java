@@ -10,6 +10,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.mk.www.smsmonitor.application.port.out.DataExporter;
 import com.mk.www.smsmonitor.domain.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
@@ -22,13 +23,29 @@ import java.util.List;
 @Slf4j
 public class GoogleSheetExporter implements DataExporter {
 
+    @Value("${google.credentials.path}")
+    private String credentialsPath;
+
+    @Value("${google.credentials.json-content}")
+    private String jsonContent;
+    
     private final String SPREADSHEET_ID = "1g0P2zNo6MwpYDxXs8RMeCAztAKbyWMkYxuRIdIDX1OI";
     private final String SHEET_NAME = "sheet1";
 
     private Sheets getSheetsService() throws IOException, GeneralSecurityException {
-        GoogleCredentials credentials = GoogleCredentials.fromStream(
-                        new FileInputStream("src/main/resources/credentials/smsreceiver.json"))
-                .createScoped(List.of("https://www.googleapis.com/auth/spreadsheets"));
+        GoogleCredentials credentials;
+        
+        if (jsonContent != null && !jsonContent.isEmpty()) {
+            // application.yml에 있는 암호화된 JSON 내용을 바로 사용 (Jasypt가 복호화해줌)
+            credentials = GoogleCredentials.fromStream(
+                    new java.io.ByteArrayInputStream(jsonContent.getBytes()))
+                    .createScoped(List.of("https://www.googleapis.com/auth/spreadsheets"));
+        } else {
+            // 기존 파일 경로 방식 사용
+            credentials = GoogleCredentials.fromStream(
+                    new FileInputStream(credentialsPath))
+                    .createScoped(List.of("https://www.googleapis.com/auth/spreadsheets"));
+        }
 
         return new Sheets.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),

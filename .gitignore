@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Sensitive Files
+src/main/resources/credentials/
+*.json
+/data/important/
+*.key
+*.jks
