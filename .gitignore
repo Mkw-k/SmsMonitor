@@ -38,7 +38,8 @@ out/
 
 # Sensitive Files
 src/main/resources/credentials/
+#src/main/resources/application-local.yml
+data/important/
 *.json
-/data/important/
 *.key
 *.jks

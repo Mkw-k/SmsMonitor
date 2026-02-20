@@ -1,10 +1,10 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local} # 기본 프로파일을 local로 설정하여 개발 편의성 증대
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/save_money}
     username: ${DB_USERNAME:root}
-    # Jasypt를 사용하려면 아래 password를 ENC(암호화된문자열)로 바꾸세요.
-    # 예: password: "ENC(f82j...)"
-    password: ${DB_PASSWORD:pass}
+    password: ${DB_PASSWORD:pass} # 로컬에서는 기본값 pass 사용, 서버에서는 환경변수 DB_PASSWORD로 주입 가능
   jpa:
     hibernate:
       ddl-auto: update
@@ -22,10 +22,9 @@ springdoc:
 
 google:
   credentials:
-    # 1. 파일 경로를 사용하는 방식 (현재 유지)
+    # 1. 파일 경로 (기본값)
     path: ${GOOGLE_CREDENTIALS_PATH:data/important/smsreceiver.json}
-    # 2. 파일 없이 JSON 내용을 직접 주입하는 방식 (권장)
-    # 아래 json-content에 ENC(암호화된내용)를 넣으면 파일이 필요 없습니다.
+    # 2. JSON 내용 직접 주입 (깃허브 Secrets에 JSON 내용을 통째로 넣을 때 사용)
     json-content: ${GOOGLE_CREDENTIALS_JSON_CONTENT:""}
 
 logging:

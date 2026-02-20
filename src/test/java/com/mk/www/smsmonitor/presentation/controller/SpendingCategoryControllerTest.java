@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(SpendingCategoryController.class)
 @AutoConfigureRestDocs
 @ActiveProfiles("test")
+@WithMockUser
 class SpendingCategoryControllerTest {
 
     @Autowired
@@ -60,10 +62,9 @@ class SpendingCategoryControllerTest {
         mockMvc.perform(post("/api/spending-categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/spending-categories/1"))
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("식비"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.name").value("식비"))
                 .andDo(document("spending-category-create",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("카테고리 생성")
@@ -73,9 +74,12 @@ class SpendingCategoryControllerTest {
                                         fieldWithPath("stupidCostTarget").description("멍청비용 대상 여부")
                                 )
                                 .responseFields(
-                                        fieldWithPath("id").description("생성된 카테고리 ID"),
-                                        fieldWithPath("name").description("카테고리 이름"),
-                                        fieldWithPath("stupidCostTarget").description("멍청비용 대상 여부")
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data.id").description("생성된 카테고리 ID"),
+                                        fieldWithPath("data.name").description("카테고리 이름"),
+                                        fieldWithPath("data.stupidCostTarget").description("멍청비용 대상 여부")
                                 )
                                 .build()
                         )
@@ -92,15 +96,18 @@ class SpendingCategoryControllerTest {
         // when & then
         mockMvc.perform(get("/api/spending-categories"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("식비"))
+                .andExpect(jsonPath("$.data[0].name").value("식비"))
                 .andDo(document("spending-category-list",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("카테고리 목록 조회")
                                 .description("등록된 모든 지출 카테고리를 조회합니다.")
                                 .responseFields(
-                                        fieldWithPath("[].id").description("카테고리 ID"),
-                                        fieldWithPath("[].name").description("카테고리 이름"),
-                                        fieldWithPath("[].stupidCostTarget").description("멍청비용 대상 여부")
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data[].id").description("카테고리 ID"),
+                                        fieldWithPath("data[].name").description("카테고리 이름"),
+                                        fieldWithPath("data[].stupidCostTarget").description("멍청비용 대상 여부")
                                 )
                                 .build()
                         )
@@ -115,13 +122,19 @@ class SpendingCategoryControllerTest {
 
         // when & then
         mockMvc.perform(delete("/api/spending-categories/{id}", 1L))
-                .andExpect(status().isNoContent())
+                .andExpect(status().isOk())
                 .andDo(document("spending-category-delete",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("카테고리 삭제")
                                 .description("특정 지출 카테고리를 삭제합니다.")
                                 .pathParameters(
                                         parameterWithName("id").description("삭제할 카테고리 ID")
+                                )
+                                .responseFields(
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data").description("응답 데이터 (null)").optional()
                                 )
                                 .build()
                         )

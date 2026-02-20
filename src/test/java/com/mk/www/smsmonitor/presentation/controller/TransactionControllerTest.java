@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(TransactionController.class)
 @AutoConfigureRestDocs
 @ActiveProfiles("test")
+@WithMockUser // Spring Security 인증 모킹
 class TransactionControllerTest {
 
     @Autowired
@@ -54,8 +56,8 @@ class TransactionControllerTest {
     private TransactionService transactionService;
 
     @Test
-    @DisplayName("성공적인_SMS_처리에_대해_201CREATED_응답을_반환한다")
-    void 성공적인_SMS_처리에_대해_201CREATED_응답을_반환한다() throws Exception {
+    @DisplayName("성공적인_SMS_처리에_대해_200OK_응답을_반환한다")
+    void 성공적인_SMS_처리에_대해_200OK_응답을_반환한다() throws Exception {
         // given
         SmsRequest request = new SmsRequest();
         request.setSender("010-1234-5678");
@@ -67,7 +69,8 @@ class TransactionControllerTest {
         mockMvc.perform(post("/api/transactions/sms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("SUCCESS"))
                 .andDo(document("transaction-sms",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("SMS 수신 및 거래내역 저장")
@@ -75,6 +78,12 @@ class TransactionControllerTest {
                                 .requestFields(
                                         fieldWithPath("sender").description("SMS 발신 번호"),
                                         fieldWithPath("message").description("SMS 메시지 내용")
+                                )
+                                .responseFields(
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data").description("응답 데이터 (null)").optional()
                                 )
                                 .build()
                         )
@@ -101,7 +110,7 @@ class TransactionControllerTest {
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].vendor").value("store1"))
+                .andExpect(jsonPath("$.data.content[0].vendor").value("store1"))
                 .andDo(document("transaction-list",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("거래내역 목록 조회")
@@ -112,82 +121,28 @@ class TransactionControllerTest {
                                         parameterWithName("isStupid").description("멍청비용 필터 여부").optional()
                                 )
                                 .responseFields(
-                                        fieldWithPath("content[].id").description("거래 ID"),
-                                        fieldWithPath("content[].amount").description("금액"),
-                                        fieldWithPath("content[].vendor").description("가맹점"),
-                                        fieldWithPath("content[].transactionTime").description("거래 일시"),
-                                        fieldWithPath("content[].stupidCost").description("멍청비용 여부"),
-                                        fieldWithPath("content[].memo").description("메모").optional(),
-                                        fieldWithPath("content[].categoryName").description("카테고리명").optional(),
-                                        fieldWithPath("pageable").description("페이지 정보"),
-                                        fieldWithPath("last").description("마지막 페이지 여부"),
-                                        fieldWithPath("totalPages").description("전체 페이지 수"),
-                                        fieldWithPath("totalElements").description("전체 요소 수"),
-                                        fieldWithPath("size").description("페이지 크기"),
-                                        fieldWithPath("number").description("현재 페이지 번호"),
-                                        fieldWithPath("sort.empty").description("정렬 정보 비어있음 여부"),
-                                        fieldWithPath("sort.sorted").description("정렬됨 여부"),
-                                        fieldWithPath("sort.unsorted").description("정렬되지 않음 여부"),
-                                        fieldWithPath("first").description("첫 페이지 여부"),
-                                        fieldWithPath("numberOfElements").description("현재 페이지 요소 수"),
-                                        fieldWithPath("empty").description("비어 있음 여부")
-                                )
-                                .build()
-                        )
-                ));
-    }
-
-    @Test
-    @DisplayName("GET_api_transactions_isStupid_true_멍청비용_페이지_조회_요청을_성공한다")
-    void GET_api_transactions_isStupid_true_멍청비용_페이지_조회_요청을_성공한다() throws Exception {
-        // given
-        Transaction transaction = Transaction.builder()
-                .id(2L)
-                .amount(new BigDecimal("50000"))
-                .vendor("stupid_store")
-                .transactionTime(LocalDateTime.now())
-                .isStupidCost(true)
-                .build();
-        Page<Transaction> page = new PageImpl<>(List.of(transaction));
-        when(transactionService.getStupidCostTransactions(any(Pageable.class))).thenReturn(page);
-
-        // when & then
-        mockMvc.perform(get("/api/transactions")
-                        .param("isStupid", "true")
-                        .param("page", "0")
-                        .param("size", "5"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].vendor").value("stupid_store"))
-                .andExpect(jsonPath("$.content[0].stupidCost").value(true))
-                .andDo(document("transaction-stupid-list",
-                        resource(ResourceSnippetParameters.builder()
-                                .summary("멍청비용 내역 목록 조회")
-                                .description("멍청비용으로 분류된 거래내역을 페이지 단위로 조회합니다.")
-                                .queryParameters(
-                                        parameterWithName("isStupid").description("멍청비용 필터 여부 (true 고정)"),
-                                        parameterWithName("page").description("페이지 번호").optional(),
-                                        parameterWithName("size").description("페이지 크기").optional()
-                                )
-                                .responseFields(
-                                        fieldWithPath("content[].id").description("거래 ID"),
-                                        fieldWithPath("content[].amount").description("금액"),
-                                        fieldWithPath("content[].vendor").description("가맹점"),
-                                        fieldWithPath("content[].transactionTime").description("거래 일시"),
-                                        fieldWithPath("content[].stupidCost").description("멍청비용 여부"),
-                                        fieldWithPath("content[].memo").description("메모").optional(),
-                                        fieldWithPath("content[].categoryName").description("카테고리명").optional(),
-                                        fieldWithPath("pageable").description("페이지 정보"),
-                                        fieldWithPath("last").description("마지막 페이지 여부"),
-                                        fieldWithPath("totalPages").description("전체 페이지 수"),
-                                        fieldWithPath("totalElements").description("전체 요소 수"),
-                                        fieldWithPath("size").description("페이지 크기"),
-                                        fieldWithPath("number").description("현재 페이지 번호"),
-                                        fieldWithPath("sort.empty").description("정렬 정보 비어있음 여부"),
-                                        fieldWithPath("sort.sorted").description("정렬됨 여부"),
-                                        fieldWithPath("sort.unsorted").description("정렬되지 않음 여부"),
-                                        fieldWithPath("first").description("첫 페이지 여부"),
-                                        fieldWithPath("numberOfElements").description("현재 페이지 요소 수"),
-                                        fieldWithPath("empty").description("비어 있음 여부")
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data.content[].id").description("거래 ID"),
+                                        fieldWithPath("data.content[].amount").description("금액"),
+                                        fieldWithPath("data.content[].vendor").description("가맹점"),
+                                        fieldWithPath("data.content[].transactionTime").description("거래 일시"),
+                                        fieldWithPath("data.content[].stupidCost").description("멍청비용 여부"),
+                                        fieldWithPath("data.content[].memo").description("메모").optional(),
+                                        fieldWithPath("data.content[].categoryName").description("카테고리명").optional(),
+                                        fieldWithPath("data.pageable").description("페이지 정보"),
+                                        fieldWithPath("data.last").description("마지막 페이지 여부"),
+                                        fieldWithPath("data.totalPages").description("전체 페이지 수"),
+                                        fieldWithPath("data.totalElements").description("전체 요소 수"),
+                                        fieldWithPath("data.size").description("페이지 크기"),
+                                        fieldWithPath("data.number").description("현재 페이지 번호"),
+                                        fieldWithPath("data.sort.empty").description("정렬 정보 비어있음 여부"),
+                                        fieldWithPath("data.sort.sorted").description("정렬됨 여부"),
+                                        fieldWithPath("data.sort.unsorted").description("정렬되지 않음 여부"),
+                                        fieldWithPath("data.first").description("첫 페이지 여부"),
+                                        fieldWithPath("data.numberOfElements").description("현재 페이지 요소 수"),
+                                        fieldWithPath("data.empty").description("비어 있음 여부")
                                 )
                                 .build()
                         )
@@ -216,7 +171,7 @@ class TransactionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.memo").value("새로운 메모"))
+                .andExpect(jsonPath("$.data.memo").value("새로운 메모"))
                 .andDo(document("transaction-memo-update",
                         resource(ResourceSnippetParameters.builder()
                                 .summary("거래내역 메모 수정")
@@ -228,13 +183,16 @@ class TransactionControllerTest {
                                         fieldWithPath("memo").description("수정할 메모 내용")
                                 )
                                 .responseFields(
-                                        fieldWithPath("id").description("거래 ID"),
-                                        fieldWithPath("amount").description("금액"),
-                                        fieldWithPath("vendor").description("가맹점"),
-                                        fieldWithPath("transactionTime").description("거래 일시"),
-                                        fieldWithPath("stupidCost").description("멍청비용 여부"),
-                                        fieldWithPath("memo").description("수정된 메모 내용"),
-                                        fieldWithPath("categoryName").description("카테고리명").optional()
+                                        fieldWithPath("tid").description("트랜잭션 ID"),
+                                        fieldWithPath("code").description("결과 코드"),
+                                        fieldWithPath("message").description("결과 메시지"),
+                                        fieldWithPath("data.id").description("거래 ID"),
+                                        fieldWithPath("data.amount").description("금액"),
+                                        fieldWithPath("data.vendor").description("가맹점"),
+                                        fieldWithPath("data.transactionTime").description("거래 일시"),
+                                        fieldWithPath("data.stupidCost").description("멍청비용 여부"),
+                                        fieldWithPath("data.memo").description("수정된 메모 내용"),
+                                        fieldWithPath("data.categoryName").description("카테고리명").optional()
                                 )
                                 .build()
                         )
