@@ -4,6 +4,7 @@ package com.mk.www.smsmonitor.presentation.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mk.www.smsmonitor.application.service.SmsService;
 import com.mk.www.smsmonitor.application.service.TransactionService;
+import com.mk.www.smsmonitor.config.JwtTokenProvider;
 import com.mk.www.smsmonitor.domain.model.Transaction;
 import com.mk.www.smsmonitor.presentation.dto.MemoRequest;
 import com.mk.www.smsmonitor.presentation.dto.SmsRequest;
@@ -34,13 +35,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
 @AutoConfigureRestDocs
 @ActiveProfiles("test")
-@WithMockUser // Spring Security 인증 모킹
+@WithMockUser
 class TransactionControllerTest {
 
     @Autowired
@@ -55,6 +57,9 @@ class TransactionControllerTest {
     @MockBean
     private TransactionService transactionService;
 
+    @MockBean
+    JwtTokenProvider jwtTokenProvider;
+
     @Test
     @DisplayName("성공적인_SMS_처리에_대해_200OK_응답을_반환한다")
     void 성공적인_SMS_처리에_대해_200OK_응답을_반환한다() throws Exception {
@@ -67,9 +72,10 @@ class TransactionControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/transactions/sms")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("SUCCESS"))
                 .andDo(document("transaction-sms",
                         resource(ResourceSnippetParameters.builder()
@@ -168,6 +174,7 @@ class TransactionControllerTest {
 
         // when & then
         mockMvc.perform(put("/api/transactions/{id}/memo", 1L)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

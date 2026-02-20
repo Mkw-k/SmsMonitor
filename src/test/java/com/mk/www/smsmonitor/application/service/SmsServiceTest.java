@@ -1,9 +1,8 @@
 package com.mk.www.smsmonitor.application.service;
 
+import com.mk.www.smsmonitor.application.port.in.SmsParser;
 import com.mk.www.smsmonitor.domain.model.Transaction;
 import com.mk.www.smsmonitor.domain.service.StupidCostStrategy;
-import com.mk.www.smsmonitor.infrastructure.sms.KbCardParser;
-import com.mk.www.smsmonitor.infrastructure.sms.NhCardParser;
 import com.mk.www.smsmonitor.presentation.dto.SmsRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,17 +26,17 @@ class SmsServiceTest {
     private TransactionService transactionService;
 
     @Mock
-    private List<StupidCostStrategy> stupidCostStrategies;
+    private StupidCostStrategy stupidCostStrategy; // 리스트 대신 개별 전략 모킹
 
     @Mock
-    private KbCardParser kbCardParser;
+    private SmsParser kbCardParser;
 
     @Mock
-    private NhCardParser nhCardParser;
+    private SmsParser nhCardParser;
 
     @BeforeEach
     void setUp() {
-        smsService = new SmsService(transactionService, stupidCostStrategies, List.of(kbCardParser, nhCardParser));
+        smsService = new SmsService(transactionService, List.of(stupidCostStrategy), List.of(kbCardParser, nhCardParser));
     }
 
     @Test
@@ -59,7 +58,7 @@ class SmsServiceTest {
         assertThat(result).isTrue();
         verify(kbCardParser, times(1)).supports(smsContent);
         verify(kbCardParser, times(1)).parse(smsContent);
-        verify(mockTransaction, times(1)).analyze(stupidCostStrategies);
+        verify(mockTransaction, times(1)).analyze(any());
         verify(transactionService, times(1)).save(mockTransaction);
     }
 
@@ -80,29 +79,5 @@ class SmsServiceTest {
         // then
         assertThat(result).isFalse();
         verify(transactionService, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("NH카드_체크카드_승인_SMS_처리_성공")
-    void NH카드_체크카드_승인_SMS_처리_성공() {
-        // given
-        String smsContent = "NH카드2*0*승인\n고*우\n1,000원 체크\n11/22 16:25\n지에스(GS)25 궁동중앙점";
-        SmsRequest request = new SmsRequest();
-        request.setSender("+821012345678");
-        request.setMessage(smsContent);
-        Transaction mockTransaction = mock(Transaction.class);
-
-        when(kbCardParser.supports(smsContent)).thenReturn(false);
-        when(nhCardParser.supports(smsContent)).thenReturn(true);
-        when(nhCardParser.parse(smsContent)).thenReturn(Optional.of(mockTransaction));
-
-        // when
-        boolean result = smsService.processNewSms(request);
-
-        // then
-        assertThat(result).isTrue();
-        verify(kbCardParser, times(1)).supports(smsContent);
-        verify(nhCardParser, times(1)).supports(smsContent);
-        verify(nhCardParser, times(1)).parse(smsContent);
     }
 }

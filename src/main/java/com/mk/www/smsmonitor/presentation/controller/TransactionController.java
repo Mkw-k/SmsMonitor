@@ -3,6 +3,7 @@ package com.mk.www.smsmonitor.presentation.controller;
 
 import com.mk.www.smsmonitor.application.service.SmsService;
 import com.mk.www.smsmonitor.application.service.TransactionService;
+import com.mk.www.smsmonitor.presentation.dto.ApiResponse;
 import com.mk.www.smsmonitor.presentation.dto.MemoRequest;
 import com.mk.www.smsmonitor.presentation.dto.SmsRequest;
 import com.mk.www.smsmonitor.presentation.dto.TransactionResponse;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,19 +27,19 @@ public class TransactionController {
 
     @Operation(summary = "SMS 수신", description = "수신된 SMS 메시지를 파싱하여 거래내역으로 저장")
     @PostMapping("/sms")
-    public ResponseEntity<Void> receiveSms(@RequestBody SmsRequest request) {
+    public ResponseEntity<ApiResponse<Void>> receiveSms(@RequestBody SmsRequest request) {
         boolean success = smsService.processNewSms(request);
 
         if (success) {
-            return ResponseEntity.created(null).build();
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<Void>created(null));
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.<Void>error("FAIL", "SMS 처리 실패"));
         }
     }
 
     @Operation(summary = "거래내역 조회", description = "모든 거래내역 또는 멍청비용 내역을 페이지 단위로 조회")
     @GetMapping
-    public ResponseEntity<Page<TransactionResponse>> getAllTransactions(
+    public ResponseEntity<ApiResponse<Page<TransactionResponse>>> getAllTransactions(
             @RequestParam(name = "isStupid", required = false) Boolean isStupid,
             Pageable pageable) {
 
@@ -49,15 +51,15 @@ public class TransactionController {
             responses = transactionService.getAllTransactions(pageable)
                     .map(TransactionResponse::from);
         }
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @Operation(summary = "메모 수정", description = "특정 거래내역 메모 추가 또는 수정")
     @PutMapping("/{id}/memo")
-    public ResponseEntity<TransactionResponse> updateMemo(@PathVariable Long id, @RequestBody MemoRequest request) {
+    public ResponseEntity<ApiResponse<TransactionResponse>> updateMemo(@PathVariable Long id, @RequestBody MemoRequest request) {
         return transactionService.updateMemo(id, request)
                 .map(TransactionResponse::from)
-                .map(ResponseEntity::ok)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)))
                 .orElse(ResponseEntity.notFound().build());
     }
 }
